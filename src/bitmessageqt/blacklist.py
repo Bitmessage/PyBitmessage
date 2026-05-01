@@ -1,4 +1,7 @@
-from PyQt4 import QtCore, QtGui
+"""
+Blacklist / whitelist administration UI
+"""
+from PyQt4 import QtCore, QtGui  # pylint: disable=import-error
 
 import widgets
 from addresses import addBMIfNotPresent
@@ -55,12 +58,12 @@ class Blacklist(QtGui.QWidget, RetranslateMixin):
             self.rerenderBlackWhiteList()
 
     def click_pushButtonAddBlacklist(self):
-        self.NewBlacklistDialogInstance = AddAddressDialog(self)
-        if self.NewBlacklistDialogInstance.exec_():
-            if self.NewBlacklistDialogInstance.labelAddressCheck.text() == \
+        NewBlacklistDialogInstance = AddAddressDialog(self)
+        if NewBlacklistDialogInstance.exec_():
+            if NewBlacklistDialogInstance.labelAddressCheck.text() == \
                     _translate("MainWindow", "Address is valid."):
                 address = addBMIfNotPresent(str(
-                    self.NewBlacklistDialogInstance.lineEditAddress.text()))
+                    NewBlacklistDialogInstance.lineEditAddress.text()))
                 # First we must check to see if the address is already in the
                 # address book. The user cannot add it again or else it will
                 # cause problems when updating and deleting the entry.
@@ -74,7 +77,7 @@ class Blacklist(QtGui.QWidget, RetranslateMixin):
                     self.tableWidgetBlacklist.setSortingEnabled(False)
                     self.tableWidgetBlacklist.insertRow(0)
                     newItem = QtGui.QTableWidgetItem(unicode(
-                        self.NewBlacklistDialogInstance.lineEditLabel.text().toUtf8(), 'utf-8'))
+                        NewBlacklistDialogInstance.lineEditLabel.text().toUtf8(), 'utf-8'))
                     newItem.setIcon(avatarize(address))
                     self.tableWidgetBlacklist.setItem(0, 0, newItem)
                     newItem = QtGui.QTableWidgetItem(address)
@@ -82,7 +85,7 @@ class Blacklist(QtGui.QWidget, RetranslateMixin):
                         QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
                     self.tableWidgetBlacklist.setItem(0, 1, newItem)
                     self.tableWidgetBlacklist.setSortingEnabled(True)
-                    t = (str(self.NewBlacklistDialogInstance.lineEditLabel.text().toUtf8()), address, True)
+                    t = (str(NewBlacklistDialogInstance.lineEditLabel.text().toUtf8()), address, True)
                     if config.get('bitmessagesettings', 'blackwhitelist') == 'black':
                         sql = '''INSERT INTO blacklist VALUES (?,?,?)'''
                     else:

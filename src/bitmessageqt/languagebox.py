@@ -3,7 +3,7 @@
 import glob
 import os
 
-from PyQt4 import QtCore, QtGui
+from PyQt4 import QtCore, QtGui  # pylint: disable=import-error
 
 import paths
 from bmconfigparser import config

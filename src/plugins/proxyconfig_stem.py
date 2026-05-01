@@ -11,6 +11,7 @@ Configure tor proxy and hidden service with
   * otherwise use stem's 'BEST' version and save onion keys to the new
     section using *onionhostname* as name for future use.
 """
+# pylint: disable=import-error
 import logging
 import os
 import random

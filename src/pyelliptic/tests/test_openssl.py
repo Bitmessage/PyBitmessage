@@ -8,11 +8,7 @@ try:
 except ImportError:
     from pybitmessage.pyelliptic import OpenSSL
 
-try:
-    OpenSSL.BN_bn2binpad
-    have_pad = True
-except AttributeError:
-    have_pad = None
+have_pad = hasattr(OpenSSL, 'BN_bn2binpad')
 
 
 class TestOpenSSL(unittest.TestCase):

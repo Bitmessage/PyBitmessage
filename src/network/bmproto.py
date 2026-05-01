@@ -67,6 +67,25 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         # track port check requests, only allow one per connection
         # completely disable port checks for now
         self.portCheckRequested = True
+        self.payloadLength = 0
+        self.payloadOffset = 0
+        self.invalid = False
+        self.timeOffset = 0
+        self.verackSent = False
+        self.verackReceived = False
+        self.payload = None
+        self.isSSL = False
+        self.remoteProtocolVersion = 0
+        self.nonce = 0
+        self.peerNode = None
+        self.streams = None
+        self.timestamp = 0
+        self.object = None
+        self.services = None
+        self.sockNode = None
+        self.magic = None
+        self.checksum = None
+        self.command = None
 
     def bm_proto_reset(self):
         """Reset the bitmessage object parser"""

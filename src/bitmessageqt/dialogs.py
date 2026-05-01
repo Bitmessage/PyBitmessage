@@ -2,7 +2,7 @@
 Custom dialog classes
 """
 # pylint: disable=too-few-public-methods
-from PyQt4 import QtGui
+from PyQt4 import QtGui  # pylint: disable=import-error
 
 import paths
 import widgets

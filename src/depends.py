@@ -188,7 +188,7 @@ def try_import(module, log_extra=False):
             logger.error(
                 'On %s, try running "%s %s" as root.',
                 dist, PACKAGE_MANAGER[dist], PACKAGES[module][dist])
-        return False
+        return None
 
 
 def check_ripemd160():
@@ -274,6 +274,7 @@ def check_openssl():
     if sys.platform == 'win32':
         paths = ['libeay32.dll']
         if getattr(sys, 'frozen', False):
+            # pylint: disable=no-member
             paths.insert(0, os.path.join(sys._MEIPASS, 'libeay32.dll'))
     else:
         paths = ['libcrypto.so', 'libcrypto.so.1.0.0']

@@ -2,6 +2,7 @@
 """
 Sound notification plugin using gstreamer
 """
+# pylint: disable=import-error,no-name-in-module
 import gi
 gi.require_version('Gst', '1.0')
 from gi.repository import Gst  # noqa: E402

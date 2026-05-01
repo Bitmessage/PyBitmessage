@@ -57,6 +57,7 @@ class TLSDispatcher(AdvancedDispatcher):
         self.tlsDone = False
         self.tlsVersion = "N/A"
         self.isSSL = False
+        self.sslSocket = None
 
     def state_tls_init(self):
         """Prepare sockets for TLS handshake"""

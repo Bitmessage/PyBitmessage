@@ -3,7 +3,7 @@
 Sound theme plugin using pycanberra
 """
 
-import pycanberra
+import pycanberra  # pylint: disable=import-error
 from pybitmessage.bitmessageqt import sound
 
 _canberra = pycanberra.Canberra()

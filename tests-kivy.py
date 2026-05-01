@@ -22,7 +22,7 @@ if __name__ == "__main__":
     if in_docker:
         try:
             os.mkdir("../out")
-        except FileExistsError:  # noqa:F821
+        except FileExistsError:  # noqa:F821 pylint: disable=undefined-variable
             pass
 
         ffmpeg = subprocess.Popen([  # pylint: disable=consider-using-with
@@ -38,7 +38,7 @@ if __name__ == "__main__":
     if in_docker:
         ffmpeg.terminate()
         try:
-            ffmpeg.wait(10)
-        except subprocess.TimeoutExpired:
+            ffmpeg.wait(10)  # pylint: disable=too-many-function-args
+        except subprocess.TimeoutExpired:  # pylint: disable=no-member
             ffmpeg.kill()
     sys.exit(not result.wasSuccessful())

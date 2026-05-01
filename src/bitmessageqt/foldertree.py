@@ -6,7 +6,7 @@ Folder tree and messagelist widgets definitions.
 
 from cgi import escape
 
-from PyQt4 import QtCore, QtGui
+from PyQt4 import QtCore, QtGui  # pylint: disable=import-error
 
 from bmconfigparser import config
 from helper_sql import sqlExecute, sqlQuery
@@ -232,8 +232,11 @@ class Ui_AddressWidget(BMTreeWidgetItem, SettingsMixin):
 
     def _getLabel(self):
         if self.address is None:
-            return unicode(_translate(
-                "MainWindow", "All accounts").toUtf8(), 'utf-8', 'ignore')
+            # pylint: disable=no-member
+            return unicode(_translate("MainWindow",
+                                      "All accounts").toUtf8(),
+                           'utf-8',
+                           'ignore')
         else:
             try:
                 return unicode(

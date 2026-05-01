@@ -15,7 +15,7 @@ import subprocess  # nosec B404
 import sys
 from binascii import hexlify
 
-from six.moves.reprlib import repr  # pylint: disable=redefined-builtin
+from six.moves.reprlib import repr  # pylint: disable=redefined-builtin,import-error
 
 # Project imports.
 import highlevelcrypto

@@ -22,7 +22,8 @@ except ImportError:
 
     def connect_plugin(sound_file):
         """This function implements the entry point."""
-        global play_cmd  # pylint: disable=global-statement
+        # pylint: disable=global-statement,global-variable-not-assigned
+        global play_cmd
 
         ext = os.path.splitext(sound_file)[-1]
         try:

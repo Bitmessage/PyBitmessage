@@ -25,17 +25,34 @@ except AttributeError:
 try:
     _encoding = QtGui.QApplication.UnicodeUTF8
 
-    def _translate(context, text, disambig, encoding=QtCore.QCoreApplication.CodecForTr, n=None):
+    # pylint: disable=unused-argument
+    def _translate(context, text, disambig,
+                   encoding=QtCore.QCoreApplication.CodecForTr, n=None):
         if n is None:
-            return QtGui.QApplication.translate(context, text, disambig, _encoding)
+            return QtGui.QApplication.translate(context,
+                                                text,
+                                                disambig,
+                                                _encoding)
         else:
-            return QtGui.QApplication.translate(context, text, disambig, _encoding, n)
+            return QtGui.QApplication.translate(context,
+                                                text,
+                                                disambig,
+                                                _encoding,
+                                                n)
 except AttributeError:
-    def _translate(context, text, disambig, encoding=QtCore.QCoreApplication.CodecForTr, n=None):
+    # pylint: disable=unused-argument
+    def _translate(context, text, disambig,
+                   encoding=QtCore.QCoreApplication.CodecForTr, n=None):
         if n is None:
-            return QtGui.QApplication.translate(context, text, disambig)
+            return QtGui.QApplication.translate(context,
+                                                text,
+                                                disambig)
         else:
-            return QtGui.QApplication.translate(context, text, disambig, QtCore.QCoreApplication.CodecForTr, n)
+            return QtGui.QApplication.translate(context,
+                                                text,
+                                                disambig,
+                                                QtCore.QCoreApplication.CodecForTr,
+                                                n)
 
 
 class Ui_MainWindow(object):
@@ -44,7 +61,8 @@ class Ui_MainWindow(object):
         MainWindow.resize(885, 580)
         icon = QtGui.QIcon()
         icon.addPixmap(
-            QtGui.QPixmap(_fromUtf8(":/newPrefix/images/can-icon-24px.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off
+            QtGui.QPixmap(_fromUtf8(":/newPrefix/images/can-icon-24px.png")),
+            QtGui.QIcon.Normal, QtGui.QIcon.Off
         )
         MainWindow.setWindowIcon(icon)
         MainWindow.setTabShape(QtGui.QTabWidget.Rounded)
@@ -53,7 +71,8 @@ class Ui_MainWindow(object):
         self.gridLayout_10 = QtGui.QGridLayout(self.centralwidget)
         self.gridLayout_10.setObjectName(_fromUtf8("gridLayout_10"))
         self.tabWidget = QtGui.QTabWidget(self.centralwidget)
-        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding,
+                                       QtGui.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.tabWidget.sizePolicy().hasHeightForWidth())
