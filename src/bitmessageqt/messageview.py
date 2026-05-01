@@ -5,7 +5,7 @@ zoom and URL click warning popup
 
 """
 
-from PyQt4 import QtCore, QtGui
+from PyQt4 import QtCore, QtGui  # pylint: disable=import-error
 
 from safehtmlparser import SafeHTMLParser
 from tr import _translate

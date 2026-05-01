@@ -1,4 +1,4 @@
-from PyQt4 import uic
+from PyQt4 import uic  # pylint: disable=import-error
 import os.path
 import paths
 

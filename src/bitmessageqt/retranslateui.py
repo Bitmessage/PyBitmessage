@@ -1,4 +1,4 @@
-from PyQt4 import QtGui
+from PyQt4 import QtGui  # pylint: disable=import-error
 import widgets
 
 

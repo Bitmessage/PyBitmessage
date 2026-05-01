@@ -7,7 +7,8 @@
 #
 # WARNING! All changes made in this file will be lost!
 
-from PyQt4 import QtCore, QtGui
+# pylint: disable=attribute-defined-outside-init
+from PyQt4 import QtCore, QtGui  # pylint: disable=import-error
 from bmconfigparser import config
 from foldertree import AddressBookCompleter
 from messageview import MessageView

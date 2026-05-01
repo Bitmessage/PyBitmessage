@@ -1,5 +1,5 @@
 
-from PyQt4.QtCore import QThread, SIGNAL
+from PyQt4.QtCore import QThread, SIGNAL  # pylint: disable=import-error
 import sys
 
 import queues

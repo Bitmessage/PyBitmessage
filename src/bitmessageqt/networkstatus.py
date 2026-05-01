@@ -4,7 +4,7 @@ Network status tab widget definition.
 
 import time
 
-from PyQt4 import QtCore, QtGui
+from PyQt4 import QtCore, QtGui  # pylint: disable=import-error
 
 import l10n
 import network.stats

@@ -2,7 +2,7 @@
 Message editor with a wheel zoom functionality
 """
 
-from PyQt4 import QtCore, QtGui  # pylint disable:import-error
+from PyQt4 import QtCore, QtGui  # pylint disable=import-error
 
 
 class MessageCompose(QtGui.QTextEdit):

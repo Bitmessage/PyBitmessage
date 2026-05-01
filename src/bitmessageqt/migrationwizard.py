@@ -1,5 +1,5 @@
 #!/usr/bin/env python2.7
-from PyQt4 import QtGui
+from PyQt4 import QtGui  # pylint: disable=import-error
 
 
 class MigrationWizardIntroPage(QtGui.QWizardPage):
@@ -21,7 +21,7 @@ class MigrationWizardIntroPage(QtGui.QWizardPage):
 
 
 class MigrationWizardAddressesPage(QtGui.QWizardPage):
-    def __init__(self, addresses):
+    def __init__(self, addresses):  # pylint: disable=unused-argument
         super(QtGui.QWizardPage, self).__init__()
         self.setTitle("Addresses")
 

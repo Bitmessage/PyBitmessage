@@ -2,7 +2,7 @@
 """Status bar Module"""
 
 from time import time
-from PyQt4 import QtGui
+from PyQt4 import QtGui  # pylint: disable=import-error
 
 
 class BMStatusBar(QtGui.QStatusBar):

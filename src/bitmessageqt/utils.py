@@ -1,7 +1,7 @@
 import hashlib
 import os
 
-from PyQt4 import QtGui
+from PyQt4 import QtGui  # pylint: disable=import-error
 
 import state
 from addresses import addBMIfNotPresent
@@ -56,7 +56,7 @@ def identiconize(address):
     elif identicon_lib == 'pydenticon':
         # Here you could load pydenticon.py
         # (just put it in the "src" folder of your Bitmessage source)
-        from pydenticon import Pydenticon
+        from pydenticon import Pydenticon  # pylint: disable=import-error
         # It is not included in the source, because it is licensed under GPLv3
         # GPLv3 is a copyleft license that would influence our licensing
         # Find the source here:
@@ -65,7 +65,7 @@ def identiconize(address):
         # https://python-pillow.org/
         idcon_render = Pydenticon(
             addBMIfNotPresent(address) + identiconsuffix, size * 3)
-        rendering = idcon_render._render()
+        rendering = idcon_render._render()  # pylint: disable=protected-access
         data = rendering.convert("RGBA").tostring("raw", "RGBA")
         qim = QtGui.QImage(data, size, size, QtGui.QImage.Format_ARGB32)
         pix = QtGui.QPixmap.fromImage(qim)

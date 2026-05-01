@@ -7,7 +7,7 @@ import sys
 import tempfile
 
 import six
-from PyQt4 import QtCore, QtGui
+from PyQt4 import QtCore, QtGui  # pylint: disable=import-error
 
 import debug
 import defaults

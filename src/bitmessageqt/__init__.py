@@ -1,7 +1,7 @@
 """
 PyQt based UI for bitmessage, the main module
 """
-# pylint: disable=import-error,too-many-lines
+# pylint: disable=import-error,too-many-lines,no-member
 import hashlib
 import locale
 import os
@@ -410,6 +410,7 @@ class MyForm(settingsmixin.SMainWindow):
                 'customContextMenuRequested(const QPoint&)'),
                 self.on_context_menuSubscriptions)
 
+    # pylint: disable=unused-argument
     def init_sent_popup_menu(self, connectSignal=True):
         # Actions
         self.actionTrashSentMessage = self.ui.sentContextMenuToolbar.addAction(
@@ -449,7 +450,6 @@ class MyForm(settingsmixin.SMainWindow):
         if treeWidget.isSortingEnabled():
             treeWidget.setSortingEnabled(False)
 
-        widgets = {}
         i = 0
         while i < treeWidget.topLevelItemCount():
             widget = treeWidget.topLevelItem(i)
@@ -538,8 +538,6 @@ class MyForm(settingsmixin.SMainWindow):
                 toAddress, 'enabled')
             isChan = config.safeGetBoolean(
                 toAddress, 'chan')
-            isMaillinglist = config.safeGetBoolean(
-                toAddress, 'mailinglist')
 
             if treeWidget == self.ui.treeWidgetYourIdentities:
                 if isChan:
@@ -577,7 +575,6 @@ class MyForm(settingsmixin.SMainWindow):
         if treeWidget.isSortingEnabled():
             treeWidget.setSortingEnabled(False)
 
-        widgets = {}
         i = 0
         while i < treeWidget.topLevelItemCount():
             widget = treeWidget.topLevelItem(i)
@@ -652,8 +649,7 @@ class MyForm(settingsmixin.SMainWindow):
         # Ask the user if we may delete their old version 1 addresses if they
         # have any.
         for addressInKeysFile in config.addresses():
-            status, addressVersionNumber, streamNumber, hash = decodeAddress(
-                addressInKeysFile)
+            addressVersionNumber = decodeAddress(addressInKeysFile)[1]
             if addressVersionNumber == 1:
                 displayMsg = _translate(
                     "MainWindow",
@@ -968,18 +964,6 @@ class MyForm(settingsmixin.SMainWindow):
             'bitmessagesettings', 'showtraynotifications',
             str(not self.actionQuiet.isChecked())
         )
-
-    # application indicator show or hide
-    """# application indicator show or hide
-    def appIndicatorShowBitmessage(self):
-        #if self.actionShow == None:
-        #    return
-        print self.actionShow.isChecked()
-        if not self.actionShow.isChecked():
-            self.hide()
-            #self.setWindowState(self.windowState() & QtCore.Qt.WindowMinimized)
-        else:
-            self.appIndicatorShowOrHideWindow()"""
 
     # Show the program window and select inbox tab
     def appIndicatorInbox(self, item=None):
@@ -3787,7 +3771,7 @@ class MyForm(settingsmixin.SMainWindow):
     def setAvatar(self, addressAtCurrentRow):
         if not os.path.exists(state.appdata + 'avatars/'):
             os.makedirs(state.appdata + 'avatars/')
-        hash = hashlib.md5(addBMIfNotPresent(addressAtCurrentRow)).hexdigest()
+        hash_ = hashlib.md5(addBMIfNotPresent(addressAtCurrentRow)).hexdigest()
         extensions = [
             'PNG', 'GIF', 'JPG', 'JPEG', 'SVG', 'BMP', 'MNG', 'PBM',
             'PGM', 'PPM', 'TIFF', 'XBM', 'XPM', 'TGA']
@@ -3813,8 +3797,8 @@ class MyForm(settingsmixin.SMainWindow):
         for ext in extensions:
             filters += [names[ext] + ' (*.' + ext.lower() + ')']
             all_images_filter += ['*.' + ext.lower()]
-            upper = state.appdata + 'avatars/' + hash + '.' + ext.upper()
-            lower = state.appdata + 'avatars/' + hash + '.' + ext.lower()
+            upper = state.appdata + 'avatars/' + hash_ + '.' + ext.upper()
+            lower = state.appdata + 'avatars/' + hash_ + '.' + ext.lower()
             if os.path.isfile(lower):
                 current_files += [lower]
             elif os.path.isfile(upper):
@@ -3826,7 +3810,8 @@ class MyForm(settingsmixin.SMainWindow):
             filter=';;'.join(filters)
         )
         # determine the correct filename (note that avatars don't use the suffix)
-        destination = state.appdata + 'avatars/' + hash + '.' + sourcefile.split('.')[-1]
+        destination = state.appdata + 'avatars/' + hash_ \
+            + '.' + sourcefile.split('.')[-1]
         exists = QtCore.QFile.exists(destination)
         if sourcefile == '':
             # ask for removal of avatar
