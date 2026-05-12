@@ -5,6 +5,7 @@ Various tests for config
 import os
 import tempfile
 from pybitmessage.bmconfigparser import config
+from pybitmessage.helper_startup import LATEST_SETTINGS_VERSION
 from .test_process import TestProcessProto
 from .common import skip_python3
 
@@ -22,7 +23,8 @@ class TestProcessConfig(TestProcessProto):
         config.read(os.path.join(self.home, 'keys.dat'))
 
         self.assertEqual(config.safeGetInt(
-            'bitmessagesettings', 'settingsversion'), 10)
+            'bitmessagesettings', 'settingsversion'),
+            LATEST_SETTINGS_VERSION)
         self.assertEqual(config.safeGetInt(
             'bitmessagesettings', 'port'), 8444)
         # don't connect

@@ -32,6 +32,11 @@ except ImportError:
 
 logger = logging.getLogger('default')
 
+#: The latest version of the keys.dat settings schema.  Bump this
+#: when adding a new migration step in :func:`updateConfig` or
+#: :class:`class_sqlThread.sqlThread`.
+LATEST_SETTINGS_VERSION = 10
+
 # The user may de-select Portable Mode in the settings if they want
 # the config files to stay in the application data folder.
 StoreConfigFilesInSameDirectoryAsProgramByDefault = False
@@ -72,7 +77,9 @@ def loadConfig():
         # no config file (or it cannot be accessed). Create config file.
         # config.add_section('bitmessagesettings')
         config.read()
-        config.set('bitmessagesettings', 'settingsversion', '10')
+        config.set(
+            'bitmessagesettings', 'settingsversion',
+            str(LATEST_SETTINGS_VERSION))
         if 'linux' in sys.platform:
             config.set('bitmessagesettings', 'minimizetotray', 'false')
         # This isn't implimented yet and when True on

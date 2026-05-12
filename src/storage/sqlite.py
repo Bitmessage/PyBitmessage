@@ -109,7 +109,12 @@ class SqliteInventory(InventoryStorage):
                 for objectHash, value in self._inventory.items():
                     sql.execute(
                         'INSERT INTO inventory VALUES (?, ?, ?, ?, ?, ?)',
-                        sqlite3.Binary(objectHash), *value)
+                        sqlite3.Binary(objectHash),
+                        value.type,
+                        value.stream,
+                        sqlite3.Binary(bytes(value.payload)),
+                        value.expires,
+                        sqlite3.Binary(bytes(value.tag)))
                 self._inventory.clear()
 
     def clean(self):
