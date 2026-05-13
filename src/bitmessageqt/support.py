@@ -141,7 +141,7 @@ def createSupportMessage(myapp):
     if paths.frozen:
         frozen = paths.frozen
     portablemode = "True" if state.appdata == paths.lookupExeFolder() else "False"
-    cpow = "True" if proofofwork.bmpow else "False"
+    cpow = "True" if proofofwork.BMPOW else "False"
     openclpow = str(
         config.safeGet('bitmessagesettings', 'opencl')
     ) if openclEnabled() else "None"

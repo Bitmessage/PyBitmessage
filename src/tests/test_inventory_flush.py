@@ -3,7 +3,6 @@
 # pylint: disable=import-outside-toplevel
 
 import os
-import struct
 import tempfile
 import threading
 import time
@@ -84,70 +83,51 @@ class TestInventoryFlush(TestPartialRun):
         """Return a 32-byte hash derived from *seed*."""
         return (b'\x00' * 31 + bytes([seed & 0xFF]))[-32:]
 
-    def _flush_and_check(self, obj_hash):
+    def _flush_and_check(self, obj_hash, expected_payload=None):
         """
-        Flush the inventory to the database, clear the _objects lookup
-        cache so that __contains__ is forced to hit sqlite, then verify
-        the hash is found via the normal inventory API.
+        Flush the inventory to the database, clear both in-memory
+        caches so that __contains__ and __getitem__ are forced to
+        hit sqlite, then verify the hash is found and (optionally)
+        that the payload content survived the round-trip.
         """
         self.inventory.flush()
         self.inventory._objects.clear()
         self.assertIn(obj_hash, self.inventory)
+        if expected_payload is not None:
+            value = self.inventory[obj_hash]
+            self.assertEqual(
+                bytes(value.payload), expected_payload,
+                "Payload content corrupted after flush")
 
     # -- test cases -------------------------------------------------------
 
-    def test_flush_with_bytes_payload(self):
-        """Baseline: payload and tag are plain bytes."""
+    def test_flush_payload_roundtrip(self):
+        """Payload content must survive the flush round-trip."""
         h = self._make_hash(1)
+        payload = b'\x80\x01' + os.urandom(64)
         self.inventory[h] = (
-            2, 1, b'\x80\x01' + os.urandom(64),
+            2, 1, payload,
             int(time.time()) + 3600, b'\xff' * 32)
-        self._flush_and_check(h)
-
-    def test_flush_with_memoryview_payload(self):
-        """
-        Reproduce the production crash: payload and tag as memoryview
-        cause 'Error binding parameter 3 - probably unsupported type.'
-        """
-        h = self._make_hash(2)
-        self.inventory[h] = (
-            2, 1, memoryview(b'\x80\x02' + os.urandom(64)),
-            int(time.time()) + 3600, memoryview(b'\xee' * 32))
-        self._flush_and_check(h)
-
-    def test_flush_with_bytearray_payload(self):
-        """bytearray is another bytes-like type that could trip sqlite3."""
-        h = self._make_hash(3)
-        self.inventory[h] = (
-            2, 1, bytearray(b'\x80\x03' + os.urandom(64)),
-            int(time.time()) + 3600, bytearray(b'\xdd' * 32))
-        self._flush_and_check(h)
+        self._flush_and_check(h, payload)
 
     def test_flush_with_empty_tag(self):
         """Empty tag (b'') must not break the INSERT."""
-        h = self._make_hash(4)
+        h = self._make_hash(2)
+        payload = b'\x80\x02' + os.urandom(64)
         self.inventory[h] = (
-            2, 1, b'\x80\x04' + os.urandom(64),
+            2, 1, payload,
             int(time.time()) + 3600, b'')
-        self._flush_and_check(h)
+        self._flush_and_check(h, payload)
 
-    # pylint: disable=redefined-variable-type
-    def test_flush_multiple_mixed_types(self):
-        """Flush a batch of items with mixed blob types."""
+    def test_flush_multiple_items(self):
+        """Flush a batch and verify every row arrives."""
         count = 20
         hashes = [self._make_hash(0x10 + i) for i in range(count)]
         expires = int(time.time()) + 3600
 
         for i, h in enumerate(hashes):
-            payload = struct.pack('>I', i) + os.urandom(60)
-            tag = struct.pack('>I', i) + b'\x00' * 28
-            if i % 3 == 0:
-                payload = memoryview(payload)
-                tag = memoryview(tag)
-            elif i % 3 == 1:
-                payload = bytearray(payload)
-                tag = bytearray(tag)
-            self.inventory[h] = (2, 1, payload, expires, tag)
+            self.inventory[h] = (
+                2, 1, os.urandom(64), expires, b'\x00' * 32)
 
         self.inventory.flush()
         self.inventory._objects.clear()

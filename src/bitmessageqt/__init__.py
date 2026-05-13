@@ -56,8 +56,7 @@ import sound
 import bitmessage_icons_rc  # noqa:F401 pylint: disable=unused-import
 import helper_sent
 
-from six.moves import iteritems, itervalues, range as xrange
-from six import text_type
+from six import iteritems, itervalues, text_type
 
 try:
     from plugins.plugin import get_plugin, get_plugins

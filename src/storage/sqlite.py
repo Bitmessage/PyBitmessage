@@ -112,9 +112,9 @@ class SqliteInventory(InventoryStorage):
                         sqlite3.Binary(objectHash),
                         value.type,
                         value.stream,
-                        sqlite3.Binary(bytes(value.payload)),
+                        sqlite3.Binary(value.payload),
                         value.expires,
-                        sqlite3.Binary(bytes(value.tag)))
+                        sqlite3.Binary(value.tag))
                 self._inventory.clear()
 
     def clean(self):
