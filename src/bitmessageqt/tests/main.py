@@ -10,6 +10,36 @@ import bitmessageqt
 from bitmessageqt import _translate, config, queues
 
 
+# pylint: disable=too-few-public-methods
+class TestApp(QtGui.QApplication):
+    """Lightweight QApplication subclass for tests, without the heavy
+    BitmessageQtApplication init (QLocalSocket singleton check,
+    organisation metadata, etc.)."""
+
+    @staticmethod
+    def get_windowstyle():
+        """Get window style set in config or default"""
+        return config.safeGet(
+            'bitmessagesettings', 'windowstyle',
+            'Windows' if sys.platform.startswith('win') else 'GTK+'
+        )
+
+
+def get_test_app():
+    """Return the existing QApplication or create a TestApp.
+
+    If the running app is a plain QApplication (missing get_windowstyle),
+    patch in the required methods from TestApp."""
+    app = QtGui.QApplication.instance()
+    if app is None:
+        return TestApp(sys.argv)
+    if not hasattr(app, 'get_windowstyle'):
+        # Bolt on the methods the tests expect; this happens when
+        # another test already created a bare QApplication.
+        app.get_windowstyle = TestApp.get_windowstyle
+    return app
+
+
 class TestBase(unittest.TestCase):
     """Base class for bitmessageqt test case"""
 
@@ -17,11 +47,10 @@ class TestBase(unittest.TestCase):
     def setUpClass(cls):
         """Provide the UI test cases with common settings"""
         cls.config = config
+        cls.app = get_test_app()
 
     def setUp(self):
-        self.app = (
-            QtGui.QApplication.instance()
-            or bitmessageqt.BitmessageQtApplication(sys.argv))
+        self.app = self.__class__.app
         self.window = self.app.activeWindow()
         if not self.window:
             self.window = bitmessageqt.MyForm()
