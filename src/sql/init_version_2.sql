@@ -27,3 +27,5 @@ CREATE TABLE `inventory` (
 INSERT INTO inventory SELECT hash, objecttype, streamnumber, payload, receivedtime FROM inventory_backup;
 
 DROP TABLE inventory_backup;
+
+UPDATE settings SET value = 3 WHERE key = 'version';

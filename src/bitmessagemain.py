@@ -23,6 +23,7 @@ except ImportError:
 app_dir = pathmagic.setup()
 
 import depends
+
 depends.check_dependencies()
 
 import getopt
@@ -85,6 +86,7 @@ def signal_handler(signum, frame):
 
 class Main(object):
     """Main PyBitmessage class"""
+
     def start(self):
         """Start main application"""
         # pylint: disable=too-many-statements,too-many-branches,too-many-locals
@@ -378,7 +380,6 @@ def main():
 
 if __name__ == "__main__":
     main()
-
 
 # So far, the creation of and management of the Bitmessage protocol and this
 # client is a one-man operation. Bitcoin tips are quite appreciated.

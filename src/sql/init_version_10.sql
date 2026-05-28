@@ -13,3 +13,5 @@ CREATE TABLE `addressbook` (
 INSERT INTO addressbook SELECT label, address FROM old_addressbook;
 
 DROP TABLE old_addressbook;
+
+UPDATE settings SET value = 11 WHERE key = 'version';

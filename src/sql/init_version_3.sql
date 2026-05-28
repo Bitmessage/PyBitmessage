@@ -3,3 +3,5 @@
 --
 
 ALTER TABLE inventory ADD tag blob DEFAULT '';
+
+UPDATE settings SET value = 4 WHERE key = 'version';
