@@ -478,7 +478,7 @@ def loop(timeout=30.0, use_poll=False, map=None, count=None, poller=None):
         # then poll
         poller(subtimeout, map)
         if isinstance(count, int):
-            count = count - 1
+            count = count - 1  # pylint: disable=redefined-variable-type
 
 
 class dispatcher(object):

@@ -74,6 +74,7 @@ class TestProcessProto(unittest.TestCase):
 
         try:
             pid = int(cls._get_readline('singleton.lock'))
+            # pylint: disable=redefined-variable-type
             cls.process = psutil.Process(pid)
             time.sleep(5)
         except (psutil.NoSuchProcess, TypeError):

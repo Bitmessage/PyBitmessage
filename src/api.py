@@ -153,9 +153,10 @@ class ErrorCodes(type):
         28: 'Invalid parameter'
     }
 
+    # pylint: disable=no-member
     def __new__(mcs, name, bases, namespace):
         result = super(ErrorCodes, mcs).__new__(mcs, name, bases, namespace)
-        for code in six.iteritems(mcs._CODES):  # pylint: disable=no-member
+        for code in six.iteritems(mcs._CODES):
             # beware: the formatting is adjusted for list-table
             result.__doc__ += """   * - %04i
          - %s

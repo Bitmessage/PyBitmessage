@@ -18,7 +18,9 @@ from .objectracker import ObjectTracker
 logger = logging.getLogger('default')
 
 
-class UDPSocket(BMProto):  # pylint: disable=too-many-instance-attributes
+# pylint: disable=too-many-instance-attributes
+# pylint: disable=no-self-use
+class UDPSocket(BMProto):
     """Bitmessage protocol over UDP (class)"""
     port = 8444
 

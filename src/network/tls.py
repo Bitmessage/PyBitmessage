@@ -44,6 +44,7 @@ else:
 class TLSDispatcher(AdvancedDispatcher):
     """TLS functionality for classes derived from AdvancedDispatcher"""
     # pylint: disable=too-many-instance-attributes,super-init-not-called
+    # pylint: disable=unused-argument
     def __init__(self, _=None, sock=None, certfile=None, keyfile=None,
                  server_side=False, ciphers=sslProtocolCiphers):
         self.want_read = self.want_write = True

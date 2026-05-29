@@ -1921,7 +1921,7 @@ class MyForm(settingsmixin.SMainWindow):
                         sent.item(i, 3).setText(textToDisplay)
 
     def updateSentItemStatusByAckdata(self, ackdata, textToDisplay):
-        if type(ackdata) is str:
+        if isinstance(ackdata, str):
             ackdata = QtCore.QByteArray(ackdata)
         for sent in (
             self.ui.tableWidgetInbox,
@@ -3193,7 +3193,7 @@ class MyForm(settingsmixin.SMainWindow):
                 self.ui.tableWidgetInboxChans,
                 self.ui.tableWidgetInboxSubscriptions
             )
-        elif type(messageLists) not in (list, tuple):
+        elif not isinstance(messageLists, (list, tuple)):
             messageLists = (messageLists,)
         for messageList in messageLists:
             if row is not None:
@@ -4141,6 +4141,7 @@ class MyForm(settingsmixin.SMainWindow):
         except NameError:
             message = ""
         except IndexError:
+            # pylint: disable=redefined-variable-type
             message = _translate(
                 "MainWindow",
                 "Error occurred: could not load message from disk."
@@ -4168,9 +4169,10 @@ class MyForm(settingsmixin.SMainWindow):
         self.rerenderMessagelistFromLabels()
         self.rerenderMessagelistToLabels()
         completerList = self.ui.lineEditTo.completer().model().stringList()
-        for i in range(len(completerList)):
-            if text_type(completerList[i]).endswith(" <" + item.address + ">"):
-                completerList[i] = item.label + " <" + item.address + ">"
+        for index_, string_ in enumerate(completerList):
+            if text_type(string_).endswith(" <" + item.address + ">"):
+                completerList[index_] = item.label + " <" \
+                    + item.address + ">"
         self.ui.lineEditTo.completer().model().setStringList(completerList)
 
     def tabWidgetCurrentChanged(self, n):
