@@ -4296,7 +4296,7 @@ class BitmessageQtApplication(QtGui.QApplication):
             # for whenever a second instance tries to run focus the application.
             self.server = QLocalServer()
             self.server.listen(self.UUID)
-            self.server.newConnection.connect(MyForm.on_new_connection)
+            self.server.newConnection.connect(self.on_new_connection)
 
         self.setStyleSheet("QStatusBar::item { border: 0px solid black }")
 
@@ -4304,8 +4304,7 @@ class BitmessageQtApplication(QtGui.QApplication):
         if self.server:
             self.server.close()
 
-    @staticmethod
-    def on_new_connection():
+    def on_new_connection(self):  # pylint: disable=no-self-use
         if myapp:
             myapp.appIndicatorShow()
 

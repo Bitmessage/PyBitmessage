@@ -40,6 +40,14 @@ class Inventory(object):
         else:
             return realRet
 
+    def __contains__(self, key):
+        """
+        Look up inventory item by hash.
+        This method is needed due to how new-style classes work.
+        """
+        self.numberOfInventoryLookupsPerformed += 1
+        return key in self._realInventory
+
     def __getitem__(self, key):
         """hint for pylint, this is dictionary like object"""
         return self._realInventory[key]
