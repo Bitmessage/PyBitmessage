@@ -13,8 +13,7 @@
                 "ms-vsliveshare.vsliveshare",
                 "nwgh.bandit",
                 "the-compiler.python-tox",
-                "vscode-icons-team.vscode-icons",
-                "visualstudioexptteam.vscodeintellicode"
+                "vscode-icons-team.vscode-icons"
             ],
             "settings": {
                 "python.defaultInterpreterPath": "/usr/bin/python3",
@@ -22,10 +21,11 @@
                 "flake8.importStrategy": "fromEnvironment",
                 "flake8.args": ["--config=setup.cfg"],
                 "pylint.interpreter": ["/usr/bin/python3"],
-                "pylint.args": ["--rcfile=setup.cfg", "--init-hook", "import sys;sys.path.append('src')"],
+                "pylint.args": ["--rcfile=setup.cfg", "--init-hook",
+                                "import sys;sys.path.append('src')"],
                 "terminal.integrated.shell.linux": "/usr/bin/zsh",
                 "terminal.integrated.defaultProfile.linux": "zsh",
-                "terminal.integrated.fontFamily": "'SourceCodePro+Powerline+Awesome Regular'",
+                "terminal.integrated.fontFamily": "'CommitMono Nerd Font'",
                 "terminal.integrated.fontSize": 14,
                 "files.exclude": {
                     "**/CODE_OF_CONDUCT.md": true,
