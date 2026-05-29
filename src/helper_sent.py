@@ -16,7 +16,7 @@ def insert(msgid=None, toAddress='[Broadcast subscribers]', fromAddress=None, su
            lastActionTime=None, sleeptill=0, retryNumber=0, encoding=2, ttl=None, folder='sent'):
     """Perform an insert into the `sent` table"""
     # pylint: disable=unused-variable
-    # pylint: disable-msg=too-many-locals
+    # pylint: disable=too-many-locals
 
     valid_addr = True
     if not ripe or not ackdata:

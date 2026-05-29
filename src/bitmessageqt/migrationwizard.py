@@ -16,7 +16,7 @@ class MigrationWizardIntroPage(QtGui.QWizardPage):
         layout.addWidget(label)
         self.setLayout(layout)
 
-    def nextId(self):
+    def nextId(self):  # pylint: disable=no-self-use
         return 1
 
 
@@ -32,7 +32,7 @@ class MigrationWizardAddressesPage(QtGui.QWizardPage):
         layout.addWidget(label)
         self.setLayout(layout)
 
-    def nextId(self):
+    def nextId(self):  # pylint: disable=no-self-use
         return 10
 
 
@@ -48,7 +48,7 @@ class MigrationWizardGPUPage(QtGui.QWizardPage):
         layout.addWidget(label)
         self.setLayout(layout)
 
-    def nextId(self):
+    def nextId(self):  # pylint: disable=no-self-use
         return 10
 
 
@@ -66,6 +66,7 @@ class MigrationWizardConclusionPage(QtGui.QWizardPage):
 
 
 class Ui_MigrationWizard(QtGui.QWizard):
+    # pylint: disable=redefined-variable-type
     def __init__(self, addresses):
         super(QtGui.QWizard, self).__init__()
 

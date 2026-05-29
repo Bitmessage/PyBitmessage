@@ -410,6 +410,7 @@ class MessageList_AddressWidget(BMAddressWidget):
                 AccountMixin.NORMAL,
                 AccountMixin.CHAN, AccountMixin.MAILINGLIST):
             try:
+                # pylint: disable=redefined-variable-type
                 newLabel = unicode(
                     config.get(self.address, 'label'),
                     'utf-8', 'ignore')

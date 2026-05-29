@@ -16,7 +16,7 @@ def create_inventory_instance(backend="sqlite"):
         "{}Inventory".format(backend.title()))()
 
 
-class Inventory:
+class Inventory(object):
     """
     Inventory class which uses storage backends
     to manage the inventory.
@@ -26,8 +26,8 @@ class Inventory:
         self._realInventory = create_inventory_instance(self._moduleName)
         self.numberOfInventoryLookupsPerformed = 0
 
-    # cheap inheritance copied from asyncore
     def __getattr__(self, attr):
+        """cheap inheritance copied from asyncore"""
         if attr == "__contains__":
             self.numberOfInventoryLookupsPerformed += 1
         try:
@@ -40,8 +40,8 @@ class Inventory:
         else:
             return realRet
 
-    # hint for pylint: this is dictionary like object
     def __getitem__(self, key):
+        """hint for pylint, this is dictionary like object"""
         return self._realInventory[key]
 
     def __setitem__(self, key, value):

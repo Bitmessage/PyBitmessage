@@ -367,6 +367,7 @@ def init():
         except ValueError:
             try:
                 # MinGW
+                # pylint: disable=redefined-variable-type
                 bso = ctypes.CDLL(libfile)
                 logger.info('Loaded C PoW DLL (cdecl) %s', BITMSGLIB)
                 BMPOW = bso.BitmessagePOW

@@ -1399,7 +1399,7 @@ class singleWorker(StoppableThread):
         TTL = 2.5 * 24 * 60 * 60
         TTL *= 2 ** retryNumber
         if TTL > 28 * 24 * 60 * 60:
-            TTL = 28 * 24 * 60 * 60
+            TTL = float(28 * 24 * 60 * 60)
         # add some randomness to the TTL
         TTL = TTL + helper_random.randomrandrange(-300, 300)
         embeddedTime = int(time.time() + TTL)

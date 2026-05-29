@@ -2,6 +2,9 @@
 PyQt based UI for bitmessage, the main module
 """
 # pylint: disable=import-error,too-many-lines,no-member
+# pylint: disable=too-many-branches,too-many-nested-blocks
+# pylint: disable=too-many-return-statements
+# pylint: disable=too-many-boolean-expressions
 import hashlib
 import locale
 import os
@@ -760,6 +763,11 @@ class MyForm(settingsmixin.SMainWindow):
 
         self.unreadCount = 0
 
+        self.currentTrayIconFileName = ""
+        self.actionQuiet = None
+        self.actionShow = None
+        self.tray = None
+
         # Set the icon sizes for the identicons
         identicon_size = 3 * 7
         self.ui.tableWidgetInbox.setIconSize(QtCore.QSize(identicon_size, identicon_size))
@@ -843,7 +851,7 @@ class MyForm(settingsmixin.SMainWindow):
 
         self.initSettings()
         self.resetNamecoinConnection()
-        self.sqlInit()
+        MyForm.sqlInit()
         self.indicatorInit()
         self.notifierInit()
         self.updateStartOnLogon()
@@ -1107,7 +1115,8 @@ class MyForm(settingsmixin.SMainWindow):
                     if newCount != folderItem.unreadCount:
                         folderItem.setUnreadCount(newCount)
 
-    def addMessageListItem(self, tableWidget, items):
+    @staticmethod
+    def addMessageListItem(tableWidget, items):
         sortingEnabled = tableWidget.isSortingEnabled()
         if sortingEnabled:
             tableWidget.setSortingEnabled(False)
@@ -1117,8 +1126,9 @@ class MyForm(settingsmixin.SMainWindow):
         if sortingEnabled:
             tableWidget.setSortingEnabled(True)
 
+    @staticmethod
     def addMessageListItemSent(
-        self, tableWidget, toAddress, fromAddress, subject,
+        tableWidget, toAddress, fromAddress, subject,
         status, ackdata, lastactiontime
     ):
         acct = accountClass(fromAddress) or BMAccount(fromAddress)
@@ -1191,12 +1201,13 @@ class MyForm(settingsmixin.SMainWindow):
                 str(subject), text_type(acct.subject, 'utf-8', 'replace')),
             MessageList_TimeWidget(
                 statusText, False, lastactiontime, ackdata)]
-        self.addMessageListItem(tableWidget, items)
+        MyForm.addMessageListItem(tableWidget, items)
 
         return acct
 
+    @staticmethod
     def addMessageListItemInbox(
-        self, tableWidget, toAddress, fromAddress, subject,
+        tableWidget, toAddress, fromAddress, subject,
         msgid, received, read
     ):
         if toAddress == str_broadcast_subscribers:
@@ -1218,12 +1229,12 @@ class MyForm(settingsmixin.SMainWindow):
             MessageList_TimeWidget(
                 l10n.formatTimestamp(received), not read, received, msgid)
         ]
-        self.addMessageListItem(tableWidget, items)
+        MyForm.addMessageListItem(tableWidget, items)
 
         return acct
 
-    # Load Sent items from database
     def loadSent(self, tableWidget, account, where="", what=""):
+        """Load Sent items from database"""
         if tableWidget == self.ui.tableWidgetInboxSubscriptions:
             tableWidget.setColumnHidden(0, True)
             tableWidget.setColumnHidden(1, False)
@@ -1241,7 +1252,7 @@ class MyForm(settingsmixin.SMainWindow):
             xAddress, account, "sent", where, what, False)
 
         for row in queryreturn:
-            self.addMessageListItemSent(tableWidget, *row)
+            MyForm.addMessageListItemSent(tableWidget, *row)
 
         tableWidget.horizontalHeader().setSortIndicator(
             3, QtCore.Qt.DescendingOrder)
@@ -1250,11 +1261,11 @@ class MyForm(settingsmixin.SMainWindow):
             _translate("MainWindow", "Sent"))
         tableWidget.setUpdatesEnabled(True)
 
-    # Load messages from database file
     def loadMessagelist(
         self, tableWidget, account, folder="inbox", where="", what="",
         unreadOnly=False
     ):
+        """Load messages from database file"""
         tableWidget.setUpdatesEnabled(False)
         tableWidget.setSortingEnabled(False)
         tableWidget.setRowCount(0)
@@ -1282,7 +1293,7 @@ class MyForm(settingsmixin.SMainWindow):
 
         for row in queryreturn:
             toAddress, fromAddress, subject, _, msgid, received, read = row
-            self.addMessageListItemInbox(
+            MyForm.addMessageListItemInbox(
                 tableWidget, toAddress, fromAddress, subject,
                 msgid, received, read)
 
@@ -1359,8 +1370,9 @@ class MyForm(settingsmixin.SMainWindow):
         self.tray.setContextMenu(m)
         self.tray.show()
 
-    # returns the number of unread messages and subscriptions
-    def getUnread(self):
+    @staticmethod
+    def getUnread():
+        """returns the number of unread messages and subscriptions"""
         counters = [0, 0]
 
         queryreturn = sqlQuery('''
@@ -1443,8 +1455,9 @@ class MyForm(settingsmixin.SMainWindow):
 
         self._player(soundFilename)
 
-    # Adapters and converters for QT <-> sqlite
-    def sqlInit(self):
+    @staticmethod
+    def sqlInit():
+        """Adapters and converters for QT <-> sqlite"""
         register_adapter(QtCore.QByteArray, str)
 
     def indicatorInit(self):
@@ -1813,15 +1826,16 @@ class MyForm(settingsmixin.SMainWindow):
     def initTrayIcon(self, iconFileName, _app):
         self.currentTrayIconFileName = iconFileName
         self.tray = QtGui.QSystemTrayIcon(
-            self.calcTrayIcon(iconFileName,
-                              self.findInboxUnreadCount()),
+            MyForm.calcTrayIcon(iconFileName,
+                                self.findInboxUnreadCount()),
             _app)
 
     def setTrayIconFile(self, iconFileName):
         self.currentTrayIconFileName = iconFileName
         self.drawTrayIcon(iconFileName, self.findInboxUnreadCount())
 
-    def calcTrayIcon(self, iconFileName, inboxUnreadCount):
+    @staticmethod
+    def calcTrayIcon(iconFileName, inboxUnreadCount):
         pixmap = QtGui.QPixmap(":/newPrefix/images/" + iconFileName)
         if inboxUnreadCount > 0:
             # choose font and calculate font parameters
@@ -1854,7 +1868,8 @@ class MyForm(settingsmixin.SMainWindow):
         return QtGui.QIcon(pixmap)
 
     def drawTrayIcon(self, iconFileName, inboxUnreadCount):
-        self.tray.setIcon(self.calcTrayIcon(iconFileName, inboxUnreadCount))
+        self.tray.setIcon(MyForm.calcTrayIcon(iconFileName,
+                                              inboxUnreadCount))
 
     def changedInboxUnread(self, row=None):
         self.drawTrayIcon(
@@ -1985,14 +2000,14 @@ class MyForm(settingsmixin.SMainWindow):
     def rerenderAddressBook(self):
         def addRow(address, label, row_type):
             self.ui.tableWidgetAddressBook.insertRow(0)
-            newItem = Ui_AddressBookWidgetItemLabel(address,
-                                                    text_type(label, 'utf-8'),
-                                                    row_type)
-            self.ui.tableWidgetAddressBook.setItem(0, 0, newItem)
-            newItem = Ui_AddressBookWidgetItemAddress(address,
-                                                      text_type(label, 'utf-8'),
-                                                      row_type)
-            self.ui.tableWidgetAddressBook.setItem(0, 1, newItem)
+            newItemL = Ui_AddressBookWidgetItemLabel(address,
+                                                     text_type(label, 'utf-8'),
+                                                     row_type)
+            self.ui.tableWidgetAddressBook.setItem(0, 0, newItemL)
+            newItemA = Ui_AddressBookWidgetItemAddress(address,
+                                                       text_type(label, 'utf-8'),
+                                                       row_type)
+            self.ui.tableWidgetAddressBook.setItem(0, 1, newItemA)
 
         oldRows = {}
         for i in range(self.ui.tableWidgetAddressBook.rowCount()):
@@ -2964,8 +2979,9 @@ class MyForm(settingsmixin.SMainWindow):
         # tableWidget.clearSelection() manages to mark the message
         # as read again.
 
-    # Format predefined text on message reply.
-    def quoted_text(self, message):
+    @staticmethod
+    def quoted_text(message):
+        """Format predefined text on message reply."""
         if not config.safeGetBoolean('bitmessagesettings', 'replybelow'):
             return '\n\n------------------------------------------------------\n' + message
 
@@ -3112,7 +3128,7 @@ class MyForm(settingsmixin.SMainWindow):
 
         self.setSendFromComboBox(toAddressAtCurrentInboxRow)
 
-        quotedText = self.quoted_text(
+        quotedText = MyForm.quoted_text(
             text_type(messageAtCurrentInboxRow, 'utf-8', 'replace'))
         widget['message'].setPlainText(quotedText)
         if acct.subject[0:3] in ('Re:', 'RE:'):
@@ -3978,12 +3994,12 @@ class MyForm(settingsmixin.SMainWindow):
         popMenuInbox.addAction(self.actionReply)
         popMenuInbox.addAction(self.actionAddSenderToAddressBook)
         # pylint: disable=no-member
-        self.actionClipboardMessagelist = self.ui.inboxContextMenuToolbar.addAction(
+        actionClipboardMessagelist = self.ui.inboxContextMenuToolbar.addAction(
             _translate("MainWindow", "Copy subject to clipboard")
             if tableWidget.currentColumn() == 2 else
             _translate("MainWindow", "Copy address to clipboard"),
             self.on_action_ClipboardMessagelist)
-        popMenuInbox.addAction(self.actionClipboardMessagelist)
+        popMenuInbox.addAction(actionClipboardMessagelist)
         # pylint: disable=no-member
         self._contact_selected = tableWidget.item(currentRow, 1)
         # preloaded gui.menu plugins with prefix 'address'
@@ -4229,7 +4245,7 @@ class BitmessageQtApplication(QtGui.QApplication):
     """
 
     # Unique identifier for this application
-    uuid = '6ec0149b-96e1-4be1-93ab-1465fb3ebf7c'
+    UUID = '6ec0149b-96e1-4be1-93ab-1465fb3ebf7c'
 
     @staticmethod
     def get_windowstyle():
@@ -4241,7 +4257,6 @@ class BitmessageQtApplication(QtGui.QApplication):
 
     def __init__(self, *argv):
         super(BitmessageQtApplication, self).__init__(*argv)
-        id = BitmessageQtApplication.uuid
 
         QtCore.QCoreApplication.setOrganizationName("PyBitmessage")
         QtCore.QCoreApplication.setOrganizationDomain("bitmessage.org")
@@ -4259,14 +4274,14 @@ class BitmessageQtApplication(QtGui.QApplication):
         self.is_running = False
 
         socket = QLocalSocket()
-        socket.connectToServer(id)
+        socket.connectToServer(self.UUID)
         self.is_running = socket.waitForConnected()
 
         # Cleanup past crashed servers
         if not self.is_running:
             if socket.error() == QLocalSocket.ConnectionRefusedError:
                 socket.disconnectFromServer()
-                QLocalServer.removeServer(id)
+                QLocalServer.removeServer(self.UUID)
 
         socket.abort()
 
@@ -4278,8 +4293,8 @@ class BitmessageQtApplication(QtGui.QApplication):
             # Nope, create a local server with this id and assign on_new_connection
             # for whenever a second instance tries to run focus the application.
             self.server = QLocalServer()
-            self.server.listen(id)
-            self.server.newConnection.connect(self.on_new_connection)
+            self.server.listen(self.UUID)
+            self.server.newConnection.connect(MyForm.on_new_connection)
 
         self.setStyleSheet("QStatusBar::item { border: 0px solid black }")
 
@@ -4287,26 +4302,27 @@ class BitmessageQtApplication(QtGui.QApplication):
         if self.server:
             self.server.close()
 
-    def on_new_connection(self):
+    @staticmethod
+    def on_new_connection():
         if myapp:
             myapp.appIndicatorShow()
 
 
 def init():
-    global app
+    global app  # pylint: disable=global-statement
     if not app:
         app = BitmessageQtApplication(sys.argv)
     return app
 
 
 def run():
-    global myapp
-    app = init()
-    myapp = MyForm()
+    global myapp  # pylint: disable=global-statement
+    _app = init()
+    myapp = MyForm()  # pylint: disable=redefined-outer-name
 
     myapp.appIndicatorInit(app)
 
-    if myapp._firstrun:
+    if myapp._firstrun:  # pylint: disable=protected-access
         myapp.showConnectDialog()  # ask the user if we may connect
 
     # only show after wizards and connect dialogs have completed
@@ -4315,4 +4331,4 @@ def run():
         QtCore.QTimer.singleShot(
             30000, lambda: myapp.setStatusIcon(state.statusIconColor))
 
-    app.exec_()
+    _app.exec_()

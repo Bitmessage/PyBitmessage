@@ -188,7 +188,6 @@ def apiInit(apiEnabled):
 def apiData():
     """TBC"""
 
-    global keysName
     global keysPath
     global usrPrompt
 

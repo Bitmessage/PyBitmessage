@@ -59,19 +59,19 @@ def getSortedSubscriptions(count=False):
     return ret
 
 
-def accountClass(address):
+def accountClass(address):  # pylint: disable=too-many-return-statements
     """Return a BMAccount for the address"""
     if not config.has_section(address):
         # .. todo:: This BROADCAST section makes no sense
         if address == str_broadcast_subscribers:
-            subscription = BroadcastAccount(address)
-            if subscription.type != AccountMixin.BROADCAST:
+            subscriptionB = BroadcastAccount(address)
+            if subscriptionB.type != AccountMixin.BROADCAST:
                 return None
-        else:
-            subscription = SubscriptionAccount(address)
-            if subscription.type != AccountMixin.SUBSCRIPTION:
-                # e.g. deleted chan
-                return NoAccount(address)
+            return subscriptionB
+        subscription = SubscriptionAccount(address)
+        if subscription.type != AccountMixin.SUBSCRIPTION:
+            # e.g. deleted chan
+            return NoAccount(address)
         return subscription
     try:
         gateway = config.get(address, "gateway")

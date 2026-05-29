@@ -17,6 +17,7 @@ class UISignaler(QThread):
             cls._instance = UISignaler()
         return cls._instance
 
+    # pylint: disable=too-many-branches
     def run(self):
         while True:
             command, data = queues.UISignalQueue.get()

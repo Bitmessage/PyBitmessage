@@ -62,7 +62,7 @@ class ECC(object):
         if isinstance(curve, str):
             self.curve = OpenSSL.get_curve(curve)
         else:
-            self.curve = curve
+            self.curve = curve  # pylint: disable=redefined-variable-type
 
         if pubkey_x is not None and pubkey_y is not None:
             self._set_keys(pubkey_x, pubkey_y, raw_privkey)
