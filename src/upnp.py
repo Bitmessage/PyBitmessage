@@ -10,6 +10,7 @@ import time
 from random import randint
 from xml.dom.minidom import Document  # nosec B408
 
+# pylint: disable=import-error
 from defusedxml.minidom import parseString
 from six.moves import http_client as httplib
 from six.moves.urllib.parse import urlparse

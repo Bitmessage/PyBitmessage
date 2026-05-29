@@ -56,6 +56,7 @@ class MsgEncode(object):
         else:
             raise MsgEncodeException("Unknown encoding %i" % (encoding))
 
+    # pylint: disable=no-member
     def encodeExtended(self, message):
         """Handle extended encoding"""
         try:
@@ -118,6 +119,7 @@ class MsgDecode(object):
 
         try:
             tmp = msgpack.loads(tmp)
+        # pylint: disable=no-member
         except (msgpack.exceptions.UnpackException,
                 msgpack.exceptions.ExtraData):
             logger.error("Error msgunpacking message")

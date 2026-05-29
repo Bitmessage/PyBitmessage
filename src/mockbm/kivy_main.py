@@ -4,7 +4,7 @@
 """Mock kivy app with mock threads."""
 
 import os
-from kivy.config import Config
+from kivy.config import Config  # pylint: disable=import-error
 from pybitmessage.mockbm import multiqueue
 from pybitmessage import state
 

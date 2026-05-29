@@ -7,6 +7,7 @@ import smtplib
 from email.header import Header
 
 from six.moves import email_mime_text
+# pylint: disable=import-error
 from six.moves.urllib import parse as urlparse
 
 import queues

@@ -1,7 +1,7 @@
 """Building osx."""
 import os
 from glob import glob
-from PyQt4 import QtCore
+from PyQt4 import QtCore  # pylint: disable=import-error
 from setuptools import setup
 
 name = "Bitmessage"

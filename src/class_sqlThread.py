@@ -9,6 +9,7 @@ import sys
 import threading
 import time
 
+# pylint: disable=import-error,redefined-builtin
 from six.moves.reprlib import repr
 
 try:
@@ -34,8 +35,12 @@ class sqlThread(threading.Thread):
 
     def __init__(self):
         threading.Thread.__init__(self, name="SQL")
+        self.conn = None
+        self.cur = None
 
-    def run(self):  # pylint: disable=too-many-locals, too-many-branches, too-many-statements
+    # pylint: disable=protected-access,too-many-locals
+    # pylint: disable=too-many-branches,too-many-statements
+    def run(self):
         """Process SQL queries from `.helper_sql.sqlSubmitQueue`"""
         helper_sql.sql_available = True
         config_ready.wait()

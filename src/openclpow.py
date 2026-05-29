@@ -38,6 +38,7 @@ def initCL():
     del gpus[:]
     ctx = False
     try:
+        # pylint: disable=no-member
         hash_dt = numpy.dtype([('target', numpy.uint64), ('v', numpy.str_, 73)])
         try:
             for platform in cl.get_platforms():
@@ -74,6 +75,7 @@ def openclEnabled():
     return bool(enabledGpus)
 
 
+# pylint: disable=no-member
 def do_opencl_pow(hash_, target):
     """Perform PoW using OpenCL"""
     output = numpy.zeros(1, dtype=[('v', numpy.uint64, 1)])

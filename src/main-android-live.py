@@ -3,7 +3,7 @@
 import state
 import sys
 from bitmessagemain import main
-from termcolor import colored
+from termcolor import colored  # pylint: disable=import-error
 print(colored('kivy is not supported at the moment for this version..',
               'red'))
 sys.exit()

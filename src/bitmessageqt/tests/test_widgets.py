@@ -8,6 +8,7 @@ Each test creates only the minimal widget under test.
 import sys
 import unittest
 
+# pylint: disable=import-outside-toplevel,unused-import
 try:
     from PyQt4 import QtCore, QtGui, QtTest
     has_qt = True

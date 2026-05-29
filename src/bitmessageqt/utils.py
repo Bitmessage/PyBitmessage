@@ -105,11 +105,9 @@ def avatarize(address):
         lower_default = state.appdata + 'avatars/' + 'default.' + ext.lower()
         upper_default = state.appdata + 'avatars/' + 'default.' + ext.upper()
         if os.path.isfile(lower_default):
-            default = lower_default
             idcon.addFile(lower_default)
             return idcon
         elif os.path.isfile(upper_default):
-            default = upper_default
             idcon.addFile(upper_default)
             return idcon
     # If no avatar is found

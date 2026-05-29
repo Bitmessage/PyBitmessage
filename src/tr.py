@@ -41,7 +41,7 @@ def translateText(context, text, n=None):
         enableGUI = True
     if enableGUI:
         try:
-            from PyQt4 import QtCore, QtGui
+            from PyQt4 import QtCore, QtGui  # pylint: disable=import-error
         except Exception as err:
             print('PyBitmessage requires PyQt unless you want to run it as a daemon'
                   ' and interact with it using the API.'

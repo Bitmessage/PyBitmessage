@@ -9,7 +9,7 @@ needed openssl functionality in class _OpenSSL.
 import ctypes
 import sys
 
-# pylint: disable=protected-access
+# pylint: disable=no-member,protected-access
 
 OpenSSL = None
 
