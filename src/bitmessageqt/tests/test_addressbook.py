@@ -4,7 +4,7 @@ Test PyQt addressbook
 import helper_addressbook
 from bitmessageqt.support import createAddressIfNeeded
 
-from main import TestBase  # pylint: disable=no-name-in-module
+from .test_main import TestBase
 
 
 class TestAddressbook(TestBase):

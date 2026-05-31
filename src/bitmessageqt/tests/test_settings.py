@@ -8,7 +8,7 @@ from PyQt4 import QtCore, QtGui, QtTest
 from bmconfigparser import config
 from bitmessageqt import settings
 
-from .main import TestBase
+from .test_main import TestBase
 
 
 class TestSettings(TestBase):

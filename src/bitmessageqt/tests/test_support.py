@@ -5,7 +5,7 @@ PyQt4 test for support request dialog
 
 import sys
 
-from main import TestBase  # pylint: disable=no-name-in-module
+from .test_main import TestBase
 from shared import isAddressInMyAddressBook
 
 
