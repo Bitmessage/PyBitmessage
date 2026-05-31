@@ -57,9 +57,9 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
         """Stop counter update timer"""
         self.timer.stop()
 
-    def formatBytes(self, num):
+    @staticmethod
+    def formatBytes(num):
         """Format bytes nicely (SI prefixes)"""
-        # pylint: disable=no-self-use
         for x in [
                 _translate(
                     "networkstatus",
@@ -76,9 +76,9 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
             num /= 1000.0
         return "%3.0f %s" % (num, 'TB')
 
-    def formatByteRate(self, num):
+    @staticmethod
+    def formatByteRate(num):
         """Format transfer speed in kB/s"""
-        # pylint: disable=no-self-use
         num /= 1000
         return "%4.0f kB" % num
 
@@ -135,13 +135,13 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
             _translate(
                 "networkstatus",
                 "Down: %1/s  Total: %2").arg(
-                    self.formatByteRate(network.stats.downloadSpeed()),
-                    self.formatBytes(network.stats.receivedBytes())))
+                    NetworkStatus.formatByteRate(network.stats.downloadSpeed()),
+                    NetworkStatus.formatBytes(network.stats.receivedBytes())))
         self.labelBytesSentCount.setText(
             _translate(
                 "networkstatus", "Up: %1/s  Total: %2").arg(
-                    self.formatByteRate(network.stats.uploadSpeed()),
-                    self.formatBytes(network.stats.sentBytes())))
+                    NetworkStatus.formatByteRate(network.stats.uploadSpeed()),
+                    NetworkStatus.formatBytes(network.stats.sentBytes())))
 
     def updateNetworkStatusTab(self, outbound, add, destination):
         """Add or remove an entry to the list of connected peers"""

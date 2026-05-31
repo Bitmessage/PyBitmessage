@@ -422,7 +422,11 @@ def run():
     except ImportError:
         Xvfb = None
     else:
-        qt_tests = loader.loadTestsFromModule(bitmessageqt.tests)
+        qt_test_dir = os.path.dirname(bitmessageqt.tests.__file__)
+        qt_tests = loader.discover(
+            qt_test_dir,
+            top_level_dir=os.path.dirname(
+                os.path.dirname(qt_test_dir)))
         suite.addTests(qt_tests)
 
     def keep_exc(ex_cls, exc, tb):  # pylint: disable=unused-argument
