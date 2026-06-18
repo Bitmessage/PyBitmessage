@@ -1,0 +1,6 @@
+[pybitmessage-test.messages-pot]
+file_filter = <lang>po
+minimum_perc = 0
+source_file = messages.pot
+source_lang = en
+type = PO
