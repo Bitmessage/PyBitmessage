@@ -5,9 +5,9 @@ Storing inventory items
 from abc import abstractmethod
 from collections import namedtuple
 try:
-    from collections import MutableMapping  # pylint: disable=deprecated-class
+    from collections.abc import MutableMapping  # pylint: disable=deprecated-class
 except ImportError:
-    from collections.abc import MutableMapping
+    from collections import MutableMapping
 
 
 InventoryItem = namedtuple('InventoryItem', 'type stream payload expires tag')
