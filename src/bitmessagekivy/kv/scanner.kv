@@ -1,9 +1,0 @@
-#:import ZBarSymbol pyzbar.pyzbar.ZBarSymbol
-#:import ZBarCam kivy_garden.zbarcam.ZBarCam
-
-BoxLayout:
-    orientation: 'vertical'
-    ZBarCam:
-        id: zbarcam
-        # optional, by default checks all types
-        code_types: ZBarSymbol.QRCODE, ZBarSymbol.EAN13
